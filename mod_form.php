@@ -49,6 +49,9 @@ class mod_vpl_mod_form extends moodleform_mod {
         } else {
             $this->standard_intro_elements( get_string( 'fulldescription', VPL ) );
         }
+        $mform->addElement( 'selectyesno', 'enhance', get_string( 'enhance', VPL ));
+        $mform->setDefault( 'enhance', 1 );
+        $mform->addHelpButton('enhance', 'enhance', VPL);
         $mform->addElement( 'header', 'submissionperiod', get_string( 'submissionperiod', VPL ) );
         $secondsday = 24 * 60 * 60;
         $now = time();

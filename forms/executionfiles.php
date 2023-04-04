@@ -38,6 +38,7 @@ $vpl->require_capability( VPL_MANAGE_CAPABILITY );
 $fgp = $vpl->get_required_fgm();
 
 $options = Array ();
+$options['enhance'] = true;
 $options['restrictededitor'] = false;
 $options['save'] = true;
 $options['run'] = true;

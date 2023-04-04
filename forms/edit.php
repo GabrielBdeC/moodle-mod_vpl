@@ -82,6 +82,7 @@ if ($subid && $grader) {
 }
 $options = Array();
 $options['id'] = $id;
+$options['enhance'] = $instance->enhance;
 $options['restrictededitor'] = $instance->restrictededitor && ! $grader;
 $options['save'] = ! $instance->example;
 $options['run'] = ($instance->run || $grader);

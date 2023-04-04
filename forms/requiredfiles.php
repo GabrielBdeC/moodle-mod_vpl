@@ -37,6 +37,7 @@ $vpl->prepare_page( 'forms/requiredfiles.php', array ( 'id' => $id ) );
 $vpl->require_capability( VPL_MANAGE_CAPABILITY );
 
 $options = Array ();
+$options['enhance'] = true;
 $options['restrictededitor'] = false;
 $options['save'] = true;
 $options['run'] = false;

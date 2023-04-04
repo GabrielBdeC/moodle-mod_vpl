@@ -32,6 +32,7 @@ class mod_vpl_generator extends testing_module_generator {
             'shortdescription' => '',
             'intro' => '',
             'introformat' => 0,
+            'enhance' => 1,
             'startdate' => 0,
             'duedate' => 0,
             'maxfiles' => 1,

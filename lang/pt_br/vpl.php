@@ -457,3 +457,5 @@ $string['variations_help'] = '<p>Podem-se definir variações para as atividades
 <p>Cada variação tem um código de identificação e uma descrição. O identificador é usado no arquivo <b>vpl_enviroment.sh</b> para passar a
 variação atribuída ao estudante e aos "scripts". A descrição, com formato HTML, é exibida aos estudantes aos quais a variação
 correspondente foi atribuída.</p>';
+$string['enhance'] = 'Refinar erros';
+$string['enhance_help'] = 'Traduzir e melhorar respostas de erros e mensagens de compiladores/interpretadores';

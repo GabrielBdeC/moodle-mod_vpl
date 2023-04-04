@@ -39,6 +39,7 @@ $vpl->prepare_page( 'forms/testcasesfile.php', array (
 $vpl->require_capability( VPL_MANAGE_CAPABILITY );
 
 $options = array ();
+$options['enhance'] = true;
 $options['restrictededitor'] = false;
 $options['save'] = true;
 $options['run'] = false;

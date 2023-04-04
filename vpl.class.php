@@ -1766,6 +1766,9 @@ class mod_vpl {
             if (trim( $instance->sebkeys ) > '') {
                 $this->print_restriction('sebkeys', $stryes );
             }
+            if ($instance->enhance) {
+                $this->print_restriction( 'enhance', $stryes );
+            }
             if ($instance->restrictededitor) {
                 $this->print_restriction( 'restrictededitor', $stryes );
             }
