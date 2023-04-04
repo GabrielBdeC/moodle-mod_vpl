@@ -16,6 +16,7 @@
         <FIELD NAME="duedate" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="After this date this vpl instance will not be available"/>
         <FIELD NAME="maxfiles" TYPE="int" LENGTH="4" NOTNULL="false" SEQUENCE="false" COMMENT="Maximum number of files"/>
         <FIELD NAME="maxfilesize" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Maximum number of bytes per file"/>
+        <FIELD NAME="enhance" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Boolean to set if enchance compiler messages"/>
         <FIELD NAME="requirednet" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Allowed submissions from"/>
         <FIELD NAME="password" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Password required to submit"/>
         <FIELD NAME="grade" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Grade scale or max"/>

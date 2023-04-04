@@ -476,6 +476,25 @@ function xmldb_vpl_upgrade_2022110512() {
 }
 
 /**
+ * Upgrades VPL to 4.1.0 (2023030412) version
+ *
+ * @return void
+ */
+function xmldb_vpl_upgrade_2023030412() {
+    global $DB;
+    $dbman = $DB->get_manager();
+
+    // Adding gield enhance option in VPL configuration.
+    $table = new xmldb_table('vpl');
+    $field = new xmldb_field('enhance', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'maxfilesize');
+
+    // Conditionally launch add field intro.
+    if (! $dbman->field_exists( $table, $field )) {
+        $dbman->add_field($table, $field);
+    }
+}
+
+/**
  * Upgrades VPL DB and data to the new version
  *
  * @param int $oldversion Current version
@@ -526,6 +545,10 @@ function xmldb_vpl_upgrade($oldversion = 0) {
     if ($oldversion < 2022110512) {
         xmldb_vpl_upgrade_2022110512();
         upgrade_mod_savepoint(true, 2022110512, 'vpl');
+    }
+    if ($oldversion < 2023030412) {
+        xmldb_vpl_upgrade_2023030412();
+        upgrade_mod_savepoint(true, 2023030412, 'vpl');
     }
     return true;
 }
