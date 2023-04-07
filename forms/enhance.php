@@ -25,6 +25,8 @@
 
 require_once(dirname( __FILE__ ) . '/../vpl_submission_CE.class.php');
 
+define("MAP_LANG_PATTERN", "/^lang_.*_map\.json$/");
+define("VPL_EVALUATE_PATTERN", "/^vpl_evaluate_.*\.json$/");
 
 /**
  * Remove protected names of pattern of lang configuration files in execution files
@@ -33,7 +35,7 @@ require_once(dirname( __FILE__ ) . '/../vpl_submission_CE.class.php');
  * 
  * @return array
  */
-function remove_files_with_protected_names($files){
+function remove_files_with_protected_names_lang($files){
     $pln_list = mod_vpl_submission_CE::get_all_distinct_pln_list();
     foreach ($pln_list as $pln){
         $pattern = '/^lang_' . $pln . '_.*\.json$/';
@@ -42,6 +44,45 @@ function remove_files_with_protected_names($files){
         }, ARRAY_FILTER_USE_KEY);
     }
     return $files;
+}
+
+/**
+ * Remove protected names of pattern of vpl evaluate lang files in execution files
+ * 
+ * @param $files array filesname key to be removed
+ * 
+ * @return array
+ */
+function remove_files_with_protected_names_evaluate($files){
+    $pattern = constant("VPL_EVALUATE_PATTERN");
+    $files = array_filter($files, function($key) use ($pattern) {
+        return !preg_match($pattern, $key);
+    }, ARRAY_FILTER_USE_KEY);
+    return $files;
+}
+
+/**
+ * Add lang for vpl evaluate lang files in execution
+ * 
+ * @param $vpl object containing instance of vpl
+ * 
+ * @return void
+ */
+function add_lang_evaluate_vpl_execution_files($vpl){
+    $execution_fgm = $vpl->get_execution_fgm();
+    $execution_files = array_keys($execution_fgm->getallfiles());
+    $execution_files_add = array();
+    $langs = array_keys(get_string_manager()->get_list_of_translations());
+    $path = dirname( __FILE__ ) . "/../jail/lang/";
+    foreach ($langs as $lang){
+        if (!in_array("vpl_evaluate_" . $lang . ".json", $execution_files) && file_exists( $path . $lang . ".json" )) {
+            $execution_files_add["vpl_evaluate_" . $lang . ".json"] = file_get_contents( $path . $lang . ".json" );
+        }
+    }
+    $execution_files_add["vpl_evaluate_en.json"] = file_get_contents( $path . "en.json" );
+    $execution_fgm->addallfiles($execution_files_add);
+    $keep_file_list = array_unique(array_merge($execution_fgm->getFileKeepList(), array_keys($execution_files_add)));
+    $execution_fgm->setfilekeeplist($keep_file_list);
 }
 
 /**
@@ -73,6 +114,8 @@ function set_lang_definition_execution_files($vpl, $requiredfiles){
             }
         }
         $execution_fgm->addallfiles($execution_files_add);
+        $keep_file_list = array_unique(array_merge($execution_fgm->getFileKeepList(), array_keys($execution_files_add)));
+        $execution_fgm->setfilekeeplist($keep_file_list);
         $removal = array_diff(mod_vpl_submission_CE::get_all_distinct_pln_list(), $pln_list);
         remove_lang_definition_execution_files_from_pln($vpl, $removal);
     } else {
@@ -82,7 +125,7 @@ function set_lang_definition_execution_files($vpl, $requiredfiles){
 }
 
 /**
- * Remove lang configuration filefromin execution files from program language list
+ * Remove lang configuration file from execution files in program language list
  * 
  * @param $vpl object containing instance of vpl
  * 

@@ -93,7 +93,7 @@ if ($fromform = $mform->get_data()) {
             $files[$name] = $data;
         }
     }
-    $files = remove_files_with_protected_names($files);
+    $files = remove_files_with_protected_names_lang($files);
     $errormessage = '';
     if ($subid = $vpl->add_submission( $userid, $files, $fromform->comments, $errormessage )) {
         \mod_vpl\event\submission_uploaded::log( array (

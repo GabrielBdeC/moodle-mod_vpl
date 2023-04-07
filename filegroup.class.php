@@ -384,7 +384,9 @@ class file_group_process {
      * Print file group
      */
     public function print_files($ifnoexist = true) {
+        require_once(dirname( __FILE__ ) . '/forms/enhance.php');
         $filenames = $this->getFileList();
+        $filenames = array_keys(remove_files_with_protected_names_evaluate(array_fill_keys($filenames, '')));
         $showbinary = self::$outputbinarysize < self::$outputbinarylimit;
         $showcode = self::$outputtextsize < self::$outputtextlimit;
         foreach ($filenames as $name) {

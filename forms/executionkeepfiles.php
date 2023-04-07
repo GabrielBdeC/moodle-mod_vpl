@@ -26,6 +26,7 @@
 require_once(dirname( __FILE__ ) . '/../../../config.php');
 require_once(dirname( __FILE__ ) . '/../locallib.php');
 require_once(dirname( __FILE__ ) . '/../vpl.class.php');
+require_once(dirname( __FILE__ ) . '/enhance.php');
 global $CFG;
 require_once($CFG->libdir . '/formslib.php');
 class mod_vpl_executionkeepfiles_form extends moodleform {
@@ -43,8 +44,10 @@ class mod_vpl_executionkeepfiles_form extends moodleform {
         $keeplist = $this->fgp->getFileKeepList();
         $num = 0;
         foreach ($list as $filename) {
-            $mform->addElement( 'checkbox', 'keepfile' . $num, $filename );
-            $mform->setDefault( 'keepfile' . $num, in_array( $filename, $keeplist ) );
+            if (!preg_match(constant("MAP_LANG_PATTERN"), $filename) && !preg_match(constant("VPL_EVALUATE_PATTERN"), $filename)){
+                $mform->addElement( 'checkbox', 'keepfile' . $num, $filename );
+                $mform->setDefault( 'keepfile' . $num, in_array( $filename, $keeplist ) );
+            }
             $num ++;
         }
         $mform->addElement( 'submit', 'savekeepfiles', get_string( 'saveoptions', VPL ) );
@@ -75,6 +78,13 @@ if ($fromform = $mform->get_data()) {
                 $keeplist[] = $list[$i];
             }
         }
+        $matches = array();
+        foreach ($list as $execution_file){
+            if (preg_match(constant("MAP_LANG_PATTERN"), $execution_file)){
+                array_push($matches, $execution_file);
+            }
+        }
+        $keeplist = array_unique(array_merge($keeplist, $matches));
         $fgp->setFileKeepList( $keeplist );
         $vpl->update();
         \mod_vpl\event\vpl_execution_keeplist_updated::log( $vpl );

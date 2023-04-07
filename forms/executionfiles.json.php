@@ -37,6 +37,7 @@ try {
     require_once(dirname( __FILE__ ) . '/../locallib.php');
     require_once(dirname( __FILE__ ) . '/../vpl.class.php');
     require_once(dirname( __FILE__ ) . '/edit.class.php');
+    require_once(dirname( __FILE__ ) . '/enhance.php');
     if (! isloggedin()) {
         throw new Exception( get_string( 'loggedinnot' ) );
     }
@@ -65,13 +66,22 @@ try {
                 break;
             }
             $fgm->deleteallfiles();
+            $postfiles = remove_files_with_protected_names_evaluate($postfiles);
             $fgm->addallfiles($postfiles);
+            add_lang_evaluate_vpl_execution_files($vpl);
             $result->response->version = $fgm->getversion();
             $vpl->update();
             break;
         case 'load' :
             $fgm = $vpl->get_execution_fgm();
             $files = $fgm->getallfiles();
+            $matches = array();
+            foreach ($files as $execution_file => $_){
+                if (preg_match(constant("VPL_EVALUATE_PATTERN"), $execution_file)){
+                    array_push($matches, $execution_file);
+                }
+            }
+            $files = array_diff_key($files, array_fill_keys($matches, true));
             $result->response->files = mod_vpl_edit::filestoide( $files );
             $result->response->version = $fgm->getversion();
             break;

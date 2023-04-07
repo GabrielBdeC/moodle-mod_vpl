@@ -233,6 +233,7 @@ function mod_vpl_core_calendar_get_event_action_string(string $eventtype): strin
 function vpl_add_instance($instance) {
     global $CFG, $DB;
     require_once($CFG->dirroot . '/calendar/lib.php');
+    require_once(dirname(__FILE__) . '/forms/enhance.php');
     vpl_truncate_vpl( $instance );
     $id = $DB->insert_record( VPL, $instance );
     // Add event.
@@ -247,6 +248,8 @@ function vpl_add_instance($instance) {
         $completionexpected = $instance->completionexpected;
         \core_completion\api::update_completion_date_event($cmid, 'vpl', $instance, $completionexpected);
     }
+    $vpl = new mod_vpl( null, $instance->id );
+    add_lang_evaluate_vpl_execution_files($vpl);
     return $id;
 }
 
@@ -304,6 +307,7 @@ function vpl_update_instance($instance) {
         $fgm = $vpl->get_required_fgm();
         $files = $fgm->getallfiles();
         set_lang_definition_execution_files($vpl, $files);
+        add_lang_evaluate_vpl_execution_files($vpl);
     }
     return $response;
 }

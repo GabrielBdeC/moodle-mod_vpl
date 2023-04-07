@@ -67,7 +67,8 @@ try {
                 break;
             }
             $fgm->deleteallfiles();
-            $postfiles = remove_files_with_protected_names($postfiles);
+            $postfiles = remove_files_with_protected_names_evaluate($postfiles);
+            $postfiles = remove_files_with_protected_names_lang($postfiles);
             $fgm->addallfiles($postfiles);
             set_lang_definition_execution_files($vpl, $postfiles);
             $result->response->version = $fgm->getversion();

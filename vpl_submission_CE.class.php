@@ -211,7 +211,7 @@ class mod_vpl_submission_CE extends mod_vpl_submission {
      * @return object with files, limits, interactive and other info
      */
     public function prepare_execution($type, &$already = array(), $vpl = null) {
-        global $DB;
+        global $DB, $USER;
         $plugincfg = get_config('mod_vpl');
         if ($vpl == null) {
             $vpl = $this->vpl;
@@ -370,6 +370,8 @@ class mod_vpl_submission_CE extends mod_vpl_submission {
                 }
             }
         }
+        $info .= vpl_bash_export( 'USER_LANG', $USER->lang );
+        $info .= vpl_bash_export( 'VPL_ENHANCE', $vplinstance->enhance );
         // Add script file with VPL environment information.
         $data->files['vpl_environment.sh'] = $info;
         $data->files['common_script.sh'] = file_get_contents( dirname( __FILE__ ) . '/jail/default_scripts/common_script.sh' );

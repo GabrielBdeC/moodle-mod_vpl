@@ -85,7 +85,8 @@ try {
             } else {
                 $actiondata->version = (int) $actiondata->version;
             }
-            $files = remove_files_with_protected_names($files);
+            $files = remove_files_with_protected_names_evaluate($files);
+            $files = remove_files_with_protected_names_lang($files);
             $result->response = mod_vpl_edit::save( $vpl, $userid, $files, $actiondata->comments, $actiondata->version );
             break;
         case 'update':
