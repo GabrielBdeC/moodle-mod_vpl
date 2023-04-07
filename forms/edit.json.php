@@ -35,6 +35,7 @@ $result->response = new stdClass();
 $result->error = '';
 try {
     require_once(dirname( __FILE__ ) . '/edit.class.php');
+    require_once(dirname( __FILE__ ) . '/enhance.php');
     if (! isloggedin()) {
         throw new Exception( get_string( 'loggedinnot' ) );
     }
@@ -84,6 +85,7 @@ try {
             } else {
                 $actiondata->version = (int) $actiondata->version;
             }
+            $files = remove_files_with_protected_names($files);
             $result->response = mod_vpl_edit::save( $vpl, $userid, $files, $actiondata->comments, $actiondata->version );
             break;
         case 'update':

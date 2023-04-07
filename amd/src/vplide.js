@@ -1600,28 +1600,48 @@ define(
                      * Save action
                      */
                     function doSave() {
-                        VPLUtil.requestAction('save', 'saving', data, options.ajaxurl)
-                        .done(function(response) {
-                            if (response.requestsconfirmation) {
-                                showMessage(response.question, {
-                                    title: str('saving'),
-                                    icon: 'alert',
-                                    yes: function() {
-                                        data.version = 0;
-                                        doSave();
+                        const reg = /^lang_[^_]+_[^_]+\.json$/;
+                        let langConfigParseError = false;
+                        for (let i = 0; i < data.files.length; i++){
+                            file = data.files[i];                        
+                            if (reg.test(file.name)){
+                                try {
+                                    JSON.parse(file.contents);
+                                } catch (e) {
+                                    if (e instanceof SyntaxError){
+                                        langConfigParseError = true;
+                                        showErrorMessage(`Enhance configuration file ${file.name} with parse error`);
+                                        break;
+                                    } else {
+                                        throw e;
                                     }
-                                });
-                            } else {
-                                fileManager.resetModified();
-                                fileManager.setVersion(response.version);
-                                menuButtons.setTimeLeft(response);
-                                VPLUtil.delay('updateMenu', updateMenu);
-                                if (VPLUtil.monitorRunning()) {
-                                    data.processid = VPLUtil.getProcessId();
-                                    VPLUtil.requestAction('update', 'updating', data, options.ajaxurl);
                                 }
                             }
-                        }).fail(showErrorMessage);
+                        }
+                        if (!langConfigParseError){
+                            VPLUtil.requestAction('save', 'saving', data, options.ajaxurl)
+                            .done(function(response) {
+                                if (response.requestsconfirmation) {
+                                    showMessage(response.question, {
+                                        title: str('saving'),
+                                        icon: 'alert',
+                                        yes: function() {
+                                            data.version = 0;
+                                            doSave();
+                                        }
+                                    });
+                                } else {
+                                    fileManager.resetModified();
+                                    fileManager.setVersion(response.version);
+                                    menuButtons.setTimeLeft(response);
+                                    VPLUtil.delay('updateMenu', updateMenu);
+                                    if (VPLUtil.monitorRunning()) {
+                                        data.processid = VPLUtil.getProcessId();
+                                        VPLUtil.requestAction('update', 'updating', data, options.ajaxurl);
+                                    }
+                                }
+                            }).fail(showErrorMessage);
+                        }
                     }
                     doSave();
                 },

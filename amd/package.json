@@ -1,0 +1,24 @@
+{
+  "name": "vpl-amd-transpile",
+  "version": "1.0.0",
+  "babel": {
+    "sourceMaps": true,
+    "comments": false,
+    "presets": [
+      [
+        "minify",
+        {
+          "builtIns": false
+        }
+      ]
+    ]
+  },
+  "scripts": {
+    "build": "babel src --out-dir build --out-file-extension .min.js"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.21.0",
+    "@babel/core": "^7.21.4",
+    "babel-preset-minify": "^0.5.2"
+  }
+}

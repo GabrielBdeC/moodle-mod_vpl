@@ -124,6 +124,33 @@ class mod_vpl_submission_CE extends mod_vpl_submission {
     }
 
     /**
+     * Return all programming language names
+     *
+     * @return array programming language name list
+     */
+    public static function get_all_distinct_pln_list() {
+        return array_values(array_unique(self::$languageext));
+    }
+
+    /**
+     * Return the programming language name based on submitted files extensions
+     *
+     * @param $filelist array
+     *            of files submitted to check type
+     * @return array programming language name
+     */
+    public static function get_pln_list_by_file_list($filelist) {
+        $response = array();
+        foreach ($filelist as $key => $_) {
+            $ext = pathinfo( $key, PATHINFO_EXTENSION );
+            if (isset( self::$languageext[$ext] )) {
+                array_push($response, self::$languageext[$ext]);
+            }
+        }
+        return $response;
+    }
+
+    /**
      * Return the default script to manage the action and detected language
      *
      * @param $script string 'vpl_run.sh','vpl_debug.sh' o 'vpl_evaluate.sh'

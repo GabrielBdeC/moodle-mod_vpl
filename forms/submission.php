@@ -28,6 +28,7 @@ require_once(dirname(__FILE__).'/../locallib.php');
 require_once(dirname(__FILE__).'/submission_form.php');
 require_once(dirname(__FILE__).'/../vpl.class.php');
 require_once(dirname(__FILE__).'/../vpl_submission.class.php');
+require_once(dirname( __FILE__ ) . '/enhance.php');
 
 global $USER;
 
@@ -92,6 +93,7 @@ if ($fromform = $mform->get_data()) {
             $files[$name] = $data;
         }
     }
+    $files = remove_files_with_protected_names($files);
     $errormessage = '';
     if ($subid = $vpl->add_submission( $userid, $files, $fromform->comments, $errormessage )) {
         \mod_vpl\event\submission_uploaded::log( array (

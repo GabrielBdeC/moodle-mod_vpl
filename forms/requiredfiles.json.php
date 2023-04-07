@@ -36,6 +36,7 @@ try {
     require_once(dirname( __FILE__ ) . '/../locallib.php');
     require_once(dirname( __FILE__ ) . '/../vpl.class.php');
     require_once(dirname( __FILE__ ) . '/edit.class.php');
+    require_once(dirname( __FILE__ ) . '/enhance.php');
 
     if (! isloggedin()) {
         throw new Exception( get_string( 'loggedinnot' ) );
@@ -66,7 +67,9 @@ try {
                 break;
             }
             $fgm->deleteallfiles();
+            $postfiles = remove_files_with_protected_names($postfiles);
             $fgm->addallfiles($postfiles);
+            set_lang_definition_execution_files($vpl, $postfiles);
             $result->response->version = $fgm->getversion();
             $vpl->update();
             break;

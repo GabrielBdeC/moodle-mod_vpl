@@ -232,6 +232,26 @@ class file_group_process {
     }
 
     /**
+     * Delete files of groupfile from fileList
+     *
+     * @return void
+     */
+    public function deletefiles($filelist) {
+        ignore_user_abort( true );
+        $filelist_fgp = $this->getFileList();
+        $filelist_resp = array();
+        foreach ($filelist_fgp as $filename) {
+            $fullname = $this->dir . self::encodeFileName( $filename );
+            if (is_file( $fullname ) && in_array($filename, $filelist)) {
+                unlink( $fullname );
+            } else {
+                array_push($filelist_resp, $filename);
+            }
+        }
+        $this->setFileList( $filelist_resp );
+    }
+
+    /**
      * Get the file list name used by default
      *
      * @return string

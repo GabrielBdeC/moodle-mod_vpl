@@ -288,6 +288,7 @@ function vpl_update_instance_event($instance) {
  * @return boolean OK
  */
 function vpl_update_instance($instance) {
+    require_once(dirname(__FILE__) . '/forms/enhance.php');
     global $DB;
     vpl_truncate_vpl( $instance );
     $instance->id = $instance->instance;
@@ -297,7 +298,10 @@ function vpl_update_instance($instance) {
     vpl_grade_item_update( $instance );
     $completionexpected = (!empty($instance->completionexpected)) ? $instance->completionexpected : null;
     \core_completion\api::update_completion_date_event($instance->cmidnumber, 'vpl', $instance, $completionexpected);
-
+    $vpl = new mod_vpl( null, $instance->id );
+    $fgm = $vpl->get_required_fgm();
+    $files = $fgm->getallfiles();
+    set_lang_definition_execution_files($vpl, $files);
     return $DB->update_record( VPL, $instance );
 }
 
