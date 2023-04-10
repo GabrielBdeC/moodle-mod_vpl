@@ -26,6 +26,8 @@
 #include <execinfo.h>
 #include <regex.h>
 #include <string>
+#include <algorithm>
+#include "/usr/include/lua.hpp"
 
 using namespace std;
 
@@ -33,6 +35,101 @@ const int MAXCOMMENTS = 20;
 const int MAXCOMMENTSLENGTH = 100*1024;
 const int MAXCOMMENTSTITLELENGTH = 1024;
 const int MAXOUTPUT = 256* 1024 ;//256Kb
+
+template <typename T>
+string to_string(const T& value) {
+    stringstream ss;
+    ss << value;
+    return ss.str();
+}
+
+class LUAInterface{
+  private:
+    lua_State* L;
+    string file, lang;
+
+    bool checkCMDLua(int request){
+      if (request != LUA_OK){
+        string error = lua_tostring(L, -1);
+        printf("%s\n",error.c_str());
+        return false;
+      }
+      return true;
+    }
+    bool checkLoadFunctionLua(std::string function){
+    if (lua_getglobal(L, function.c_str()) != LUA_TFUNCTION){
+      printf("Error in LUA! Stack without %s\n function.", function.c_str());
+      return false;
+    }
+    return true;
+  }
+
+  public:
+    LUAInterface(string f) : L(luaL_newstate()), file(f), lang("en"){
+      luaL_openlibs(L);
+    }
+    LUAInterface(string f, string l) : L(luaL_newstate()), file(f), lang(l){
+      luaL_openlibs(L);
+    }
+    ~LUAInterface(){
+      lua_close(L);
+    }
+    bool doFile(string file){
+      return checkCMDLua(luaL_dofile(L, file.c_str()));
+    }
+    bool loadTransLangLib(){
+      if (checkLoadFunctionLua("loadTransLangLib")){
+        lua_pushstring(L, lang.c_str());
+        if (checkCMDLua(lua_pcall(L, 1, 1, 0))){
+          return true;
+        }
+      }
+      return false;
+    }
+    bool loadEnhacedLangLib(){
+      if (checkLoadFunctionLua("loadEnhacedLangLib")){
+        lua_pushstring(L, lang.c_str());
+        if (checkCMDLua(lua_pcall(L, 1, 1, 0))){
+          return true;
+        }
+      }
+      return false;
+    }
+    string langEvaluate(int id){
+      if (checkLoadFunctionLua("langEvaluate")){
+        lua_pushstring(L, lang.c_str());
+        lua_pushstring(L, (to_string(id)).c_str());
+        if (checkCMDLua(lua_pcall(L, 2, 1, 0))){
+          if (lua_isstring(L, -1)){
+            string result = lua_tostring(L, -1);
+            lua_pop(L, 1);
+            return result;
+          }
+          printf("Error in LUA! Result from langEvaluate isn't string");
+        }
+      }
+      return "error";
+    }
+    string enhanceMessage(string info){
+      if (checkLoadFunctionLua("enhanceMessage")){
+        lua_pushstring(L, info.c_str());
+        lua_pushstring(L, file.c_str());
+        lua_pushstring(L, lang.c_str());
+        if (checkCMDLua(lua_pcall(L, 3, 1, 0))){
+          if (lua_isstring(L, -1)){
+            string result = lua_tostring(L, -1);
+            lua_pop(L, 1);
+            return result;
+          }
+          printf("Error in LUA! Result from enhanceMessage isn't string");
+        }
+      }
+      return "error";
+    }
+
+};
+
+LUAInterface* L;
 
 /**
  * Class Tools Declaration
@@ -43,7 +140,7 @@ public:
 	static string readFile(string name);
 	static vector<string> splitLines(const string &data);
 	static int nextLine(const string &data);
-	static string caseFormat(string text);
+	static string caseFormat(string text, bool enhance/*=false*/);
 	static string toLower(const string &text);
 	static string normalizeTag(const string &text);
 	static bool parseLine(const string &text, string &name, string &data);
@@ -399,12 +496,12 @@ int Tools::nextLine(const string &data) {
 	return l;
 }
 
-string Tools::caseFormat(string text) {
+string Tools::caseFormat(string text, bool enhance = false) {
 	vector<string> lines = Tools::splitLines(text);
 	string res;
 	int nlines = lines.size();
 	for (int i = 0; i < nlines; i++)
-		res += ">" + lines[i] + '\n';
+		res += (enhance ? L->enhanceMessage(lines[i]) : lines[i]) + '\n';
 	return res;
 }
 
@@ -504,7 +601,7 @@ const char* Tools::getenv(const char* name, const char* defaultvalue) {
 	const char* value = ::getenv(name);
 	if ( value == NULL ) {
 		value = defaultvalue;
-	    printf("Warning: using default value '%s' for '%s'\n", defaultvalue, name);
+	    printf((L->langEvaluate(1)).c_str(), defaultvalue, name);
 	}
 	return value; // Fixes bug found by Peter Svec
 }
@@ -515,7 +612,7 @@ double Tools::getenv(const char* name, double defaultvalue) {
 	if ( svalue != NULL ) {
 		Tools::convert2(svalue, value);
 	} else {
-		printf("Warning: using default value '%lf' for '%s'\n", defaultvalue, name);
+		printf((L->langEvaluate(2)).c_str(), defaultvalue, name);
 	}
 	return value;
 }
@@ -686,7 +783,7 @@ bool NumbersOutput::typeMatch(const string& text){
 }
 
 string NumbersOutput::type(){
-	return "numbers";
+	return (L->langEvaluate(3)).c_str();
 }
 
 NumbersOutput::operator string () const{
@@ -750,7 +847,7 @@ bool TextOutput::typeMatch(const string& text) {
 }
 
 string TextOutput::type(){
-	return "text";
+	return (L->langEvaluate(4)).c_str();
 }
 
 /**
@@ -809,7 +906,7 @@ bool ExactTextOutput::typeMatch(const string& text){
 }
 
 string ExactTextOutput::type(){
-	return "exact text";
+	return (L->langEvaluate(5)).c_str();
 }
 
 /**
@@ -849,7 +946,7 @@ RegularExpressionOutput::RegularExpressionOutput(const string &text, const strin
 					stringstream ss;
 					ss << wrongFlag;
 					ss >> flagCatch;
-					string errorType = string("Error: invalid flag in regex output ")+ string(errorCase)+ string (", found a ") + string(flagCatch) + string (" used as a flag, only i and m available.");
+					string errorType = string((L->langEvaluate(39)).c_str())+ string(errorCase)+ string ((L->langEvaluate(40)).c_str()) + string(flagCatch) + string ((L->langEvaluate(41)).c_str());
 					const char* flagError = errorType.c_str();
 					p_ErrorTest->addFatalError(flagError);
 					p_ErrorTest->outputEvaluation();
@@ -893,7 +990,7 @@ bool RegularExpressionOutput::match (const string& output) {
 
 		} else { // Memory Error
 			Evaluation* p_ErrorTest = Evaluation::getSinglenton();
-			string errorType = string("Error: out of memory error, during matching case ") + string(errorCase);
+			string errorType = string((L->langEvaluate(6)).c_str()) + string(errorCase);
 			const char* flagError = errorType.c_str();
 			p_ErrorTest->addFatalError(flagError);
 			p_ErrorTest->outputEvaluation();
@@ -905,7 +1002,7 @@ bool RegularExpressionOutput::match (const string& output) {
         char* bff = new char[length + 1];
         (void) regerror(reti, &expression, bff, length);
 		Evaluation* p_ErrorTest = Evaluation::getSinglenton();
-		string errorType = string("Error: regular expression compilation error")+string (" in case: ")+ string(errorCase) +string (".\n")+ string(bff);
+		string errorType = string((L->langEvaluate(7)).c_str())+string ((L->langEvaluate(8)).c_str())+ string(errorCase) +string (".\n")+ string(bff);
 		const char* flagError = errorType.c_str();
 		p_ErrorTest->addFatalError(flagError);
 		p_ErrorTest->outputEvaluation();
@@ -935,7 +1032,7 @@ bool RegularExpressionOutput::typeMatch(const string& text) {
 }
 
 string RegularExpressionOutput::type() {
-	return "regular expression";
+	return (L->langEvaluate(9)).c_str();
 }
 /**
  * Class Case Definitions
@@ -1221,7 +1318,7 @@ string TestCase::getCaseDescription(){
 string TestCase::getCommentTitle(bool withGradeReduction=false) {
 	char buf[100];
 	string ret;
-	sprintf(buf, "Test %d", id);
+	sprintf(buf, (L->langEvaluate(10)).c_str(), id);
 	ret = buf;
 	if (caseDescription.size() > 0) {
 		ret += ": " + caseDescription;
@@ -1241,13 +1338,13 @@ string TestCase::getComment() {
 	char buf[100];
 	string ret;
 	if(output.size()==0){
-		ret += "Configuration error in the test case: the output is not defined";
+		ret += (L->langEvaluate(11)).c_str();
 	}
 	if (programTimeout) {
-		ret += "Program timeout\n";
+		ret += (L->langEvaluate(12)).c_str();
 	}
 	if (outputTooLarge) {
-		sprintf(buf, "Program output too large (%dKb)\n", sizeReaded / 1024);
+		sprintf(buf, (L->langEvaluate(13)).c_str(), sizeReaded / 1024);
 		ret += buf;
 	}
 	if (executionError) {
@@ -1255,20 +1352,33 @@ string TestCase::getComment() {
 	}
 	if (isExitCodeTested() && ! correctExitCode) {
 		char buf[250];
-		sprintf(buf, "Incorrect exit code. Expected %d, found %d\n", expectedExitCode, exitCode);
+		sprintf(buf, (L->langEvaluate(14)).c_str(), expectedExitCode, exitCode);
 		ret += buf;
 	}
 	if (! correctOutput) {
 		if (failMessage.size()) {
 			ret += failMessage + "\n";
 		} else {
-			ret += "Incorrect program output\n";
-			ret += " --- Input ---\n";
+			ret += (L->langEvaluate(15)).c_str();
+			ret += (L->langEvaluate(16)).c_str();
 			ret += Tools::caseFormat(input);
-			ret += "\n --- Program output ---\n";
+			ret += (L->langEvaluate(17)).c_str();
 			ret += Tools::caseFormat(programOutputBefore + programOutputAfter);
+			/*vector<string> temp = Tools::splitLines(Tools::caseFormat(programOutputBefore + programOutputAfter, true));
+			regex_t regCase, regCaseEnhanced;
+			regcomp(&regCase, "<case>.*", 0);
+			//regcomp(&regCaseEnhanced, "<caseEnhanced>.*", 0);
+			int at, bt;
+			stable_sort(temp.begin(), temp.end(), [&regCase, &regCaseEnhanced, &at, &bt](string a, string b){
+				at = regexec(&regCase, a.c_str(), 0, NULL, 0) == 0 ? 0 : 1;
+				bt = regexec(&regCase, b.c_str(), 0, NULL, 0) == 0 ? 0 : 1;
+				return at < bt;
+			});
+			regfree(&regCase);
+			//regfree(&regCaseEnhanced);
+			for (string s : temp) ret += s + "\n";*/
 			if(output.size()>0){
-				ret += "\n --- Expected output ("+output[0]->type()+")---\n";
+				ret += (L->langEvaluate(18)).c_str()+output[0]->type()+")\n";
 				ret += Tools::caseFormat(output[0]->studentOutputExpected());
 			}
 		}
@@ -1318,7 +1428,7 @@ void TestCase::runTest(time_t timeout) {// Timeout in seconds
 	int pp2[2]; // Receive data
 	if (pipe(pp1) == -1 || pipe(pp2) == -1) {
 		executionError = true;
-		sprintf(executionErrorReason, "Internal error: pipe error (%s)",
+		sprintf(executionErrorReason, (L->langEvaluate(19)).c_str(),
 				strerror(errno));
 		return;
 	}
@@ -1327,7 +1437,7 @@ void TestCase::runTest(time_t timeout) {// Timeout in seconds
 	}
 	if ( ! Tools::existFile(command) ){
 		executionError = true;
-		sprintf(executionErrorReason, "Execution file not found '%s'", command);
+		sprintf(executionErrorReason, (L->langEvaluate(20)).c_str(), command);
 		return;
 	}
 	pid_t pid;
@@ -1343,12 +1453,12 @@ void TestCase::runTest(time_t timeout) {// Timeout in seconds
 		dup2(STDOUT_FILENO, STDERR_FILENO);
 		setpgrp();
 		execve(command, (char * const *) argv, (char * const *) envv);
-		perror("Internal error, execve fails");
+		perror((L->langEvaluate(21)).c_str());
 		abort(); //end of child
 	}
 	if (pid == -1) {
 		executionError = true;
-		sprintf(executionErrorReason, "Internal error: fork error (%s)",
+		sprintf(executionErrorReason, (L->langEvaluate(22)).c_str(),
 				strerror(errno));
 		return;
 	}
@@ -1392,7 +1502,7 @@ void TestCase::runTest(time_t timeout) {// Timeout in seconds
 			int signal = WTERMSIG(status);
 			executionError = true;
 			sprintf(executionErrorReason,
-					"Program terminated due to \"%s\" (%d)\n", strsignal(
+					(L->langEvaluate(23)).c_str(), strsignal(
 							signal), signal);
 		}
 		if (WIFEXITED(status)) {
@@ -1400,11 +1510,11 @@ void TestCase::runTest(time_t timeout) {// Timeout in seconds
 		} else {
 			executionError = true;
 			strcpy(executionErrorReason,
-					"Program terminated but unknown reason.");
+					(L->langEvaluate(24)).c_str());
 		}
 	} else if (pidr != 0) {
 		executionError = true;
-		strcpy(executionErrorReason, "waitpid error");
+		strcpy(executionErrorReason, (L->langEvaluate(25)).c_str());
 	}
 	readWrite(fdread, fdwrite);
 	correctExitCode = isExitCodeTested() && expectedExitCode == exitCode;
@@ -1594,7 +1704,7 @@ void Evaluation::loadTestCases(string fname) {
 			} else {
 				if ( line.size() > 0 ) {
 					char buf[250];
-					sprintf(buf,"Syntax error: unexpected line %d ", i+1);
+					sprintf(buf,(L->langEvaluate(26)).c_str(), i+1);
 					addFatalError(buf);
 				}
 			}
@@ -1636,7 +1746,7 @@ void Evaluation::runTests() {
 		return;
 	}
 	if (maxtime < 0) {
-		addFatalError("Global timeout");
+		addFatalError((L->langEvaluate(27)).c_str());
 		return;
 	}
 	nerrors = 0;
@@ -1645,10 +1755,10 @@ void Evaluation::runTests() {
 	float defaultGradeReduction = (grademax - grademin) / testCases.size();
 	int timeout = maxtime / testCases.size();
 	for (size_t i = 0; i < testCases.size(); i++) {
-		printf("Testing %lu/%lu : %s\n", (unsigned long) i+1, (unsigned long)testCases.size(), testCases[i].getCaseDescription().c_str());
+		printf((L->langEvaluate(28)).c_str(), (unsigned long) i+1, (unsigned long)testCases.size(), testCases[i].getCaseDescription().c_str());
 		if (timeout <= 1 || Timer::elapsedTime() >= maxtime) {
 			grade = grademin;
-			addFatalError("Global timeout");
+			addFatalError((L->langEvaluate(27)).c_str());
 			return;
 		}
 		if (maxtime - Timer::elapsedTime() < timeout) { // Try to run last case
@@ -1683,24 +1793,24 @@ void Evaluation::runTests() {
 }
 
 void Evaluation::outputEvaluation() {
-	const char* stest[] = {" test", "tests"};
+	const char* stest[] = {(L->langEvaluate(29)).c_str(), (L->langEvaluate(30)).c_str()};
 	if (testCases.size() == 0) {
 		printf("<|--\n");
-		printf("-No test case found\n");
+		printf("%s", (L->langEvaluate(36)).c_str());
 		printf("--|>\n");
 	}
 	if (ncomments > 1) {
 		printf("\n<|--\n");
-		printf("-Failed tests\n");
+		printf("%s", (L->langEvaluate(31)).c_str());
 		for (int i = 0; i < ncomments; i++) {
-			printf("%s", titles[i]);
+			printf("<comment>%s", titles[i]);
 		}
 		printf("--|>\n");
 	}
 	if ( ncomments > 0 ) {
 		printf("\n<|--\n");
 		for (int i = 0; i < ncomments; i++) {
-			printf("-%s", titlesGR[i]);
+			printf("<subTitle>%s", titlesGR[i]);
 			printf("%s\n", comments[i]);
 		}
 		printf("--|>\n");
@@ -1708,12 +1818,12 @@ void Evaluation::outputEvaluation() {
 	int passed = nruns - nerrors;
 	if ( nruns > 0 ) {
 		printf("\n<|--\n");
-		printf("-Summary of tests\n");
-		printf(">+------------------------------+\n");
-		printf(">| %2d %s run/%2d %s passed |\n",
+		printf("%s",(L->langEvaluate(32)).c_str());
+		printf("%s",(L->langEvaluate(33)).c_str());
+		printf((L->langEvaluate(34)).c_str(),
 				nruns, nruns==1?stest[0]:stest[1],
 				passed, passed==1?stest[0]:stest[1]); // Taken from Dominique Thiebaut
-		printf(">+------------------------------+\n");
+		printf("%s",(L->langEvaluate(33)).c_str());
 		printf("\n--|>\n");
 	}
 	if ( ! noGrade ) {
@@ -1722,7 +1832,7 @@ void Evaluation::outputEvaluation() {
 		int len = strlen(buf);
 		if (len > 3 && strcmp(buf + (len - 3), ".00") == 0)
 			buf[len - 3] = 0;
-		printf("\nGrade :=>>%s\n", buf);
+		printf((L->langEvaluate(35)).c_str(), buf);
 	}
 	fflush(stdout);
 }
@@ -1740,9 +1850,9 @@ void signalCatcher(int n) {
 	}
 	Evaluation *obj = Evaluation::getSinglenton();
 	if (n == SIGTERM) {
-		obj->addFatalError("Global test timeout (TERM signal received)");
+		obj->addFatalError((L->langEvaluate(37)).c_str());
 	} else {
-		obj->addFatalError("Internal test error");
+		obj->addFatalError((L->langEvaluate(38)).c_str());
 		obj->outputEvaluation();
 		Stop::setTERMRequested();
 		abort();
@@ -1765,13 +1875,33 @@ void setSignalsCatcher() {
 }
 
 int main(int argc, char *argv[], const char **env) {
-	Timer::start();
-	TestCase::setEnvironment(env);
-	setSignalsCatcher();
-	Evaluation* obj = Evaluation::getSinglenton();
-	obj->loadParams();
-	obj->loadTestCases("evaluate.cases");
-	obj->runTests();
-	obj->outputEvaluation();
-	return EXIT_SUCCESS;
+  string file = "py";
+  string lang = "br";
+  L = new LUAInterface(file, lang);
+  if (!(L->doFile("vpl_evaluate_lib_translate.lua"))){
+    printf("Error loading vpl_evaluate_lib_translate.lua");
+    return EXIT_FAILURE;
+  }
+  if (!(L->doFile("vpl_evaluate_lib_enhance.lua"))){
+    printf("Error loading vpl_evaluate_lib_enhance.lua");
+    return EXIT_FAILURE;
+  }
+  if (!(L->loadTransLangLib())){
+    printf("Error loading translantion lang file for the language: %s", lang.c_str());
+    return EXIT_FAILURE;
+  }
+  if (!(L->loadEnhacedLangLib())){
+    printf("Error loading enhanced lang file for the language: %s", lang.c_str());
+    return EXIT_FAILURE;
+  }
+  Timer::start();
+  TestCase::setEnvironment(env);
+  setSignalsCatcher();
+  Evaluation* obj = Evaluation::getSinglenton();
+  obj->loadParams();
+  obj->loadTestCases("evaluate.cases");
+  obj->runTests();
+  obj->outputEvaluation();
+  delete L;
+  return EXIT_SUCCESS;
 }

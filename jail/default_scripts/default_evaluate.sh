@@ -35,7 +35,7 @@ else
 		fi
 		mv vpl_evaluate.cpp.save vpl_evaluate.cpp
 		check_program g++
-		g++ vpl_evaluate.cpp -g -lm -lutil -o .vpl_tester
+		g++ vpl_evaluate.cpp -g -lm -lutil -o .vpl_tester -llua -ldl -std=c++17
 		if [ ! -f .vpl_tester ] ; then
 			echo "Error compiling evaluation program"
 			exit 1

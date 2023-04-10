@@ -27,6 +27,22 @@ require_once(dirname( __FILE__ ) . '/../vpl_submission_CE.class.php');
 
 define("MAP_LANG_PATTERN", "/^lang_.*_map\.json$/");
 define("VPL_EVALUATE_PATTERN", "/^vpl_evaluate_.*\.json$/");
+define("VPL_EVALUATE_LIB_PATTERN", "/^vpl_evaluate_lib_.*\.lua$/");
+
+/**
+ * Remove protected names of pattern of vpl lib files in execution files
+ * 
+ * @param $files array filesname key to be removed
+ * 
+ * @return array
+ */
+function remove_files_with_protected_names_lib($files){
+    $pattern = constant("VPL_EVALUATE_LIB_PATTERN");
+    $files = array_filter($files, function($key) use ($pattern) {
+        return !preg_match($pattern, $key);
+    }, ARRAY_FILTER_USE_KEY);
+    return $files;
+}
 
 /**
  * Remove protected names of pattern of lang configuration files in execution files
@@ -43,6 +59,7 @@ function remove_files_with_protected_names_lang($files){
             return !preg_match($pattern, $key);
         }, ARRAY_FILTER_USE_KEY);
     }
+    $files = remove_files_with_protected_names_lib($files);
     return $files;
 }
 
@@ -58,6 +75,7 @@ function remove_files_with_protected_names_evaluate($files){
     $files = array_filter($files, function($key) use ($pattern) {
         return !preg_match($pattern, $key);
     }, ARRAY_FILTER_USE_KEY);
+    $files = remove_files_with_protected_names_lib($files);
     return $files;
 }
 
@@ -80,6 +98,11 @@ function add_lang_evaluate_vpl_execution_files($vpl){
         }
     }
     $execution_files_add["vpl_evaluate_en.json"] = file_get_contents( $path . "en.json" );
+    $path = dirname( __FILE__ ) . "/../jail/default_scripts/";
+    $file_lib = 'vpl_evaluate_lib_translate.lua';
+    $execution_files_add[$file_lib] = file_get_contents( $path . $file_lib);
+    $file_lib = 'vpl_evaluate_lib_utils.lua';
+    $execution_files_add[$file_lib] = file_get_contents( $path . $file_lib);
     $execution_fgm->addallfiles($execution_files_add);
     $keep_file_list = array_unique(array_merge($execution_fgm->getFileKeepList(), array_keys($execution_files_add)));
     $execution_fgm->setfilekeeplist($keep_file_list);
@@ -113,6 +136,9 @@ function set_lang_definition_execution_files($vpl, $requiredfiles){
                 }
             }
         }
+        $path = dirname( __FILE__ ) . "/../jail/default_scripts/";
+        $file_lib = "vpl_evaluate_lib_enhance.lua";
+        $execution_files_add[$file_lib] = file_get_contents( $path . $file_lib );
         $execution_fgm->addallfiles($execution_files_add);
         $keep_file_list = array_unique(array_merge($execution_fgm->getFileKeepList(), array_keys($execution_files_add)));
         $execution_fgm->setfilekeeplist($keep_file_list);
