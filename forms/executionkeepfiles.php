@@ -44,7 +44,11 @@ class mod_vpl_executionkeepfiles_form extends moodleform {
         $keeplist = $this->fgp->getFileKeepList();
         $num = 0;
         foreach ($list as $filename) {
-            if (!preg_match(constant("MAP_LANG_PATTERN"), $filename) && !preg_match(constant("VPL_EVALUATE_PATTERN"), $filename)){
+            if (
+                !preg_match(constant("MAP_LANG_PATTERN"), $filename) &&
+                !preg_match(constant("VPL_EVALUATE_PATTERN"), $filename) &&
+                !preg_match(constant("VPL_EVALUATE_LIB_PATTERN"), $filename)
+            ){
                 $mform->addElement( 'checkbox', 'keepfile' . $num, $filename );
                 $mform->setDefault( 'keepfile' . $num, in_array( $filename, $keeplist ) );
             }
@@ -80,7 +84,10 @@ if ($fromform = $mform->get_data()) {
         }
         $matches = array();
         foreach ($list as $execution_file){
-            if (preg_match(constant("MAP_LANG_PATTERN"), $execution_file)){
+            if (
+                preg_match(constant("MAP_LANG_PATTERN"), $execution_file) ||
+                preg_match(constant("VPL_EVALUATE_LIB_PATTERN"), $filename)
+            ){
                 array_push($matches, $execution_file);
             }
         }
