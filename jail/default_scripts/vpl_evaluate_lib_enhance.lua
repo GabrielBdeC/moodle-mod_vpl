@@ -10,7 +10,7 @@ end
 
 local function getDefaultIdAndTokenPos(info, file)
   local pos = {}
-  for id, data in pairs(enhance.default[file]) do
+  for id, data in pairs(enhance.default) do
     if (string.find(data, "&$var" , 1, true)) then
       local splitTable = data:split("&$var")
       local start = 0
@@ -71,26 +71,26 @@ function string:split(sep)
   return temp
 end
 
-function loadEnhacedLangLib(lang)
-  enhance["default"] = jsonFileGet(dirEnhance .. "default.json")
-  filename = dirEnhance .. lang .. ".json"
+function loadEnhacedLangLib(idiom, lang)
+  enhance["default"] = jsonFileGet("lang_" .. lang .. "_map.json")
+  filename = "lang_" .. lang .. "_" .. idiom .. ".json"
   if (lib_lua.file_exists(filename)) then
-    enhance[lang] = jsonFileGet(filename)
+    enhance[idiom] = jsonFileGet(filename)
   else
-    enhance[lang] = enhance["default"]
+    enhance[idiom] = enhance["default"]
   end
 end
 
-function enhanceMessage(info, file, lang)
-  local id, pos = getDefaultIdAndTokenPos(info, file)
+function enhanceMessage(info, idiom)
+  local id, pos = getDefaultIdAndTokenPos(info)
   if (id == -1) then return "<case>" .. info
   else
     local str = ''
-    if (#pos == 0) then return "<caseEnhanced>" .. enhance[lang][file][id] .. "<caseOriginal>" .. info
+    if (#pos == 0) then return "<caseEnhanced>" .. enhance[idiom][id] .. "<caseOriginal>" .. info
     else
-      local token = getToken(info, pos, enhance.default[file][id]:count("&$var"))
+      local token = getToken(info, pos, enhance.default[id]:count("&$var"))
       local splitTable = {}
-      if (enhance[lang][file][id]) then splitTable = enhance[lang][file][id]:split("&$var")
+      if (enhance[idiom][id]) then splitTable = enhance[idiom][id]:split("&$var")
       else ehanced = info end
       local idPos = 1
       if (pos[idPos].start ~= 1) then
