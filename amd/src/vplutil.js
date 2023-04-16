@@ -27,6 +27,22 @@
 /* globals ace */
 
 
+function enhancedMouseMove(event, id){
+	var popUp = document.getElementById("enhancedPop" + id);
+	if (popUp.style.display == "block"){
+		popUp.style.left = event.clientX + "px";
+		popUp.style.top = event.clientY + "px";
+	}
+}
+
+function enhancedMouseOver(_, id){
+	document.getElementById("enhancedPop" + id).style.display = "block";
+};
+
+function enhancedMouseOut(_, id){
+	document.getElementById("enhancedPop" + id).style.display = "none";
+};
+
 define(
     [
         'jquery',
@@ -66,7 +82,10 @@ define(
                 'data': JSON.stringify({getPreferences: true}),
                 contentType: "application/json; charset=utf-8",
                 dataType: "json"
-            }).done(func);
+            }).done((resp)=>{
+                vpl_global_lang = resp.preferences.lang;
+                func(resp);
+            });
         };
         // Get scrollBarWidth.
         VPLUtil.scrollBarWidth = function() {
@@ -1163,17 +1182,52 @@ define(
             function escReg(t) {
                 return t.replace(/[-[\]{}()*+?.,\\^$|#\s]/, "\\$&");
             }
-            var regtitgra = /\([-]?[\d]+[.]?[\d]*\)\s*$/;
-            var regtit = /^-.*/;
-            var regcas = /^\s*>/;
+            var regClassList = [
+                {
+                    regex: /^<title>.*/,
+                    type: "title",
+                    class: "ace_identifier vpl_widget_header"
+                },
+                {
+                    regex: /^<subTitle>.*/,
+                    type: "subTitle",
+                    class: "ace_identifier sub_vpl_widget_header"
+                },
+                {
+                    regex: /^<subSubTitle>.*/,
+                    type: "subSubTitle",
+                    class: "ace_identifier sub_sub_vpl_widget_header"
+                },
+                {
+                    regex: /^<comment>.*/,
+                    type: "comment",
+                    class: "ace_comment vpl_evaluate_result"
+                },
+                {
+                    regex: /^<testCase>.*/,
+                    type: "testCase",
+                    class: "ace_identifier vpl_evaluate_result"
+                },
+                {
+                    regex: /^<case>.*/,
+                    type: "case",
+                    class: "ace_identifier vpl_evaluate_result"
+                },
+                {
+                    regex: /^<caseEnhanced>.*/,
+                    type: "caseEnhanced",
+                    class: "ace_string vpl_evaluate_result vpl_enhanced_result"
+                }
+            ];
+            var regCaseOriginal = {
+                regex: /<caseOriginal>.*/,
+                class: "ace_tooltip"
+            };
             // TODO adds error? use first anotation for icon.
             var regError = new RegExp('\\[err\\]|error|' + escReg(VPLUtil.str('error')), 'i');
             var regWarning = new RegExp('\\[warn\\]|warning|note|' + escReg(VPLUtil.str('warning')), 'i');
             var regInformation = new RegExp('\\[info\\]|information', 'i');
-            var state = '';
             var html = '';
-            var comment = '';
-            var case_ = '';
             var lines = text.split(/\r\n|\n|\r/);
             var regFiles = [];
             var lastAnotation = false;
@@ -1196,8 +1250,15 @@ define(
                     var regf = escReg(filenames[i]);
                     // Filename:N, filename(N), filename N, filename line N, filename on line N.
                     // N=#|#:#|#,#.
-                    var reg = "(^| |/)" + regf + "( on line | line |:|\\()(\\d+)(:|,)?(\\d+)?(\\))?";
-                    regFiles[i] = new RegExp(reg, 'm');
+                    var reg = {
+                        "en": "(^| |/)(\"|)" + regf + "(\"|)( on line |, line | line |:|\\()(\\d+)(:|,)?(\\d+)?(\\))?",
+                        "pt_br": "(^| |/)(\"|)" + regf + "(\"|)( na linha |, linha | linha |:|\\()(\\d+)(:|,)?(\\d+)?(\\))?"
+                    };
+                    if (vpl_global_lang && typeof reg[vpl_global_lang] === "string"){
+                        regFiles[i] = new RegExp(reg[vpl_global_lang], 'm');
+                    } else {
+                        regFiles[i] = new RegExp(reg.en, 'm');
+                    }
                 }
             })();
             /**
@@ -1227,8 +1288,8 @@ define(
                             type = 'error';
                         }
                         lastAnotation = {
-                            'row': (match[3] - 1),
-                            'column': match[5],
+                            'row': (parseInt(match[5]) - 1),
+                            'column': parseInt(match[7]),
                             'type': type,
                             'text': rawline,
                         };
@@ -1236,8 +1297,10 @@ define(
                         var fileName = filenames[i];
                         var href = getHref(i);
                         var lt = VPLUtil.sanitizeText(fileName);
-                        var data = 'data-file="' + fileName + '" data-line="' + match[3] + '"';
-                        line = line.replace(reg, '$1<a ' + href + ' class="vpl_fl" ' + data + '>' + lt + '$2$3$4$5$6</a>');
+                        var data = 'data-file="' + fileName + '" data-line="' + parseInt(match[5]) + '"';
+                        line = line.replace(reg, '<a ' + href + ' class="vpl_fl" ' + data + '>' + lt + '$2$3$4$5$6</a>');
+                        line = line.substring(line.search('<a ' + href + ' class="vpl_fl"'));
+                        line = line.substring(0, line.search('</a>') + 4);
                         sh[i].setAnnotations(anot);
                     }
                 }
@@ -1257,106 +1320,133 @@ define(
              * @returns {string} Line in HTML format
              */
             function getTitle(line) {
-                lastAnotation = false;
-                line = line.substr(1);
-                var end = regtitgra.exec(line);
-                if (end !== null) {
-                    line = line.substr(0, line.length - end[0].length);
-                }
                 var html = '';
                 if (folding) {
                     html += '<a href="javascript:void(0)" onclick="VPLUtil.showHideDiv(this)">[+]</a>';
                 }
-                html += '<b class="ui-widget-header ui-corner-all">' + VPLUtil.sanitizeText(line) + '</b><br>';
-                html = genFileLinks(html, line);
+                html += '<div class="' + line.class + '">' + VPLUtil.sanitizeText(line.line) + '</div>';
                 return html;
             }
-            /**
-             * Returns comment that has been saved
-             * @returns {string}
-             */
-            function getComment() {
-                lastAnotation = false;
-                var ret = comment;
-                comment = '';
-                return ret;
-            }
-            /**
-             * Adds a new comment in HTML
-             * @param {string} rawline  Comment to add
-             */
-            function addComment(rawline) {
-                var line = VPLUtil.sanitizeText(rawline);
-                comment += genFileLinks(line, rawline) + '<br>';
-            }
-            /**
-             * Adds a new case
-             * @param {*} rawline Text to add
-             */
-            function addCase(rawline) {
-                var line = VPLUtil.sanitizeText(rawline);
-                case_ += genFileLinks(line, rawline) + "\n";
-            }
-            /**
-             * Returns cases saved in HTML
-             * @returns {string}
-             */
-            function getCase() {
-                lastAnotation = false;
-                var ret = case_;
-                case_ = '';
-                return '<pre><i>' + ret + '</i></pre>';
-            }
-
-            for (var i = 0; i < lines.length; i++) {
-                var line = lines[i];
+            var linesFormat = [];
+            lines.forEach((line) => {
+                var match = regClassList.some((regClass)=>{
+                    if (regClass.regex.test(line)){
+                        linesFormat.push({
+                            line: line.replace("<" + regClass.type + ">", ""),
+                            type: regClass.type,
+                            class: regClass.class
+                        })
+                        return true;
+                    }
+                    return false;
+                });
+                if (!match){
+                    linesFormat.push(
+                        {
+                            line: line,
+                            type: "",
+                            class: ""
+                        }
+                    );
+                }
+            });
+            var spliceLines = [];
+            linesFormat.forEach((el, id, arr)=>{
+                if (el.type == "caseEnhanced"){
+                    var idSearch = id;
+                    while (idSearch + 1 < arr.length){
+                        if (regCaseOriginal.regex.exec(arr[idSearch].line)){
+                            break;
+                        }
+                        idSearch++;
+                    }
+                    if (idSearch < arr.length){
+                        spliceLines.push({
+                            beginId: id,
+                            endId: idSearch
+                        });
+                    }
+                }
+            });
+            var countLines = 0;
+            spliceLines.forEach((el)=>{
+                if (el.beginId < el.endId){
+                    var elementSpliced = linesFormat.splice(el.beginId - countLines, el.endId - el.beginId + 1);
+                    var insertElement = {
+                        type: elementSpliced[0].type,
+                        line: elementSpliced.map(info => info.line).join('<br>'),
+                        class: elementSpliced[0].class
+                    };
+                    linesFormat.splice(el.beginId - countLines, 0, insertElement);
+                    countLines = countLines + el.endId - el.beginId;
+                }
+            });
+            linesFormat = linesFormat.filter((el)=>{
+                return el.line !== "";
+            });
+            var caseGroup = {
+                loading: false,
+                buffer: ''
+            };
+            var idPop = 1;
+            linesFormat.forEach((line)=>{
                 if (noFormat) {
                     html += genFileLinks(VPLUtil.sanitizeText(line), line) + "\n";
-                    continue;
+                    return;
                 }
-                var match = regcas.exec(line);
-                var regcasv = regcas.test(line);
-                if ((match !== null) != regcasv) {
-                    VPLUtil.log('error');
+                switch(line.type){
+                    case "title":
+                        html += getTitle(line);
+                        break;
+                    case "subTitle":
+                        var sanitizedLine = VPLUtil.sanitizeText(line.line);
+                        html += '<div class="' + line.class + '">' + sanitizedLine + '</div>';
+                        if (caseGroup.loading == true){
+                            caseGroup.loading = false;
+                            sanitizedLine = VPLUtil.sanitizeText(caseGroup.buffer);
+                            genFileLinks(sanitizedLine, caseGroup.buffer);
+                        } else {
+                            caseGroup.loading = true;
+                            caseGroup.buffer = '';
+                        }
+                        break;
+                    case "caseEnhanced":
+                        var end = regCaseOriginal.regex.exec(line.line);
+                        var tooltipHtml = ''
+                        if (end != null){
+                            line.line = line.line.substring(0, end.index);
+                            tooltipHtml = (
+                                `<div class="${regCaseOriginal.class}" id="enhancedPop${idPop}" style="display: none; left: 0px; top: 0px;">` +
+                                end[0].substring(14, end[0].length) +
+                                '</div>'
+                            );
+                        }
+                        var splitBr = line.line.split('<br>');
+                        splitBr.forEach((str)=>{
+                            var sanitizedLine = VPLUtil.sanitizeText(str);
+                            html +=
+                                `<div class="${line.class}"` +
+                                (end ? (
+                                    ` onmouseover="enhancedMouseOver(event, ${idPop})"` +
+                                    ` onmousemove="enhancedMouseMove(event, ${idPop})"` +
+                                    ` onmouseout="enhancedMouseOut(event, ${idPop})"`)
+                                : '') +
+                                '>' +
+                                `${sanitizedLine}</div>` +
+                                tooltipHtml
+                            caseGroup.buffer += str + "\n";
+                        });
+                        idPop++;
+                        break;
+                    case "case":
+                        caseGroup.buffer += line.line + "\n";
+                    case "caseTest":
+                    default:
+                        var sanitizedLine = VPLUtil.sanitizeText(line.line);
+                        html += '<div class="' + line.class + '">' + sanitizedLine + '</div>';
+                        break;
                 }
-                if (regtit.test(line)) {
-                    switch (state) {
-                        case 'comment':
-                            html += getComment();
-                            break;
-                        case 'case':
-                            html += getCase();
-                            break;
-                    }
-                    if (afterTitle) {
-                        html += '</div>';
-                    }
-                    html += getTitle(line);
-                    html += folding ? '<div style="display:none">' : '<div>';
-                    afterTitle = true;
-                    state = '';
-                } else if (regcasv) {
-                    if (state == 'comment') {
-                        html += getComment();
-                    }
-                    addCase(line.substr(match[0].length));
-                    state = 'case';
-                } else {
-                    if (state == 'case') {
-                        html += getCase();
-                    }
-                    addComment(line);
-                    state = 'comment';
-                }
-            }
-            switch (state) {
-                case 'comment':
-                    html += getComment();
-                    break;
-                case 'case':
-                    html += getCase();
-                    break;
-            }
+            });
             if (afterTitle) {
                 html += '</div>';
             }

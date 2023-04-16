@@ -21,7 +21,7 @@
   "20": "Operação impossível: o operador &$var não pode ser utilizado junto de &$var e &$var.",
   "21": "A função pede mais argumentos (variáveis) &$var\nPrecisa de &$var e apenas foram dados &$var",
   "22": "Verifique se as aspas \" foram fechadas",
-  "23": "Não deveria ter identação nessa linha\nA linha anterior não pede identação",
+  "23": "Não deveria ter indentação nessa linha\nA linha anterior não pede indentação",
   "24": "Idente todas as linhas ou com espaços, ou com 'tab'",
   "25": "Não dá pra multiplicar uma lista/dicionário com um &$var",
   "26": "O texto não contém esse índice (posição)",

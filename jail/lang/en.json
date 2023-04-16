@@ -15,8 +15,8 @@
   "14": "<comment>Incorrect exit code. Expected %d, found %d\n",
   "15": "<comment>Incorrect program output\n",
   "16": "<subSubTitle> Input \n",
-  "17": "\n<subSubTitle> Program output \n",
-  "18": "\n<subSubTitle> Expected output (",
+  "17": "\n<subSubTitle>Program output\n",
+  "18": "\n<subSubTitle>Expected output (",
   "19": "<comment>Internal error: pipe error (%s)",
   "20": "<comment>Execution file not found '%s'",
   "21": "<comment>Internal error, execve fails",
@@ -33,11 +33,10 @@
   "32": "<title>Summary of tests\n",
   "33": "<comment>+------------------------------+\n",
   "34": "<comment>| %2d %s run/%2d %s passed |\n",
-  "35": "\nGrade :=>>%s\n",
-  "36": "<title>No test case found\n",
-  "37": "<comment>Global test timeout (TERM signal received)",
-  "38": "<comment>Internal test error",
-  "39": "<comment>Error: invalid flag in regex output ",
-  "40": ", found a ",
-  "41": " used as a flag, only i and m available."
+  "35": "<title>No test case found\n",
+  "36": "<comment>Global test timeout (TERM signal received)",
+  "37": "<comment>Internal test error",
+  "38": "<comment>Error: invalid flag in regex output ",
+  "39": ", found a ",
+  "40": " used as a flag, only i and m available."
 }

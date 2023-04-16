@@ -820,10 +820,13 @@ define(
                 }
                 show = show || hasContent;
                 if (show) {
+                    resultContainer.removeClass();
+                    resultContainer.addClass(["vpl_ide_results", (fileManager.getTheme() == "terminal" ? "ace-terminal-theme" : "ace-" + (fileManager.getTheme() || 'chrome').replaceAll("_","-"))]);
                     resultContainer.show();
                     resultContainer.vplVisible = true;
                     result.accordion("refresh");
                     result.accordion('option', 'active', gradeShow ? 1 : 0);
+                    result.children().removeClass("ui-widget-content");
                     for (i = 0; i < files.length; i++) {
                         var anot = files[i].getAnnotations();
                         for (var j = 0; j < anot.length; j++) {
@@ -1341,6 +1344,8 @@ define(
                 },
             }));
             acethemeSelect.on('change', function() {
+                    $(vpl_results).removeClass();
+                    $(vpl_results).addClass(["vpl_ide_results", (acethemeSelect.val() == "terminal" ? "ace-terminal-theme" : "ace-" + (acethemeSelect.val() || 'chrome').replaceAll("_","-"))]);
                     fileManager.setTheme(acethemeSelect.val());
             });
             VPLUtil.setDialogTitleIcon(dialogAceTheme, 'theme');

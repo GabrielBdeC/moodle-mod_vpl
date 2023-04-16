@@ -26,6 +26,7 @@
 define( 'AJAX_SCRIPT', true );
 
 require(__DIR__ . '/../../../config.php');
+global $USER;
 $result = (object)[];
 $result->success = false;
 $result->error = '';
@@ -54,6 +55,7 @@ try {
         $result->preferences->fontSize = (int)  get_user_preferences('vpl_editor_fontsize', 12);
         $result->preferences->aceTheme = get_user_preferences('vpl_acetheme', '');
         $result->preferences->terminalTheme = (int)  get_user_preferences('vpl_terminaltheme', 0);
+        $result->preferences->lang = $USER->lang;
         $result->success = true;
     }
 } catch ( Exception $e ) {

@@ -360,3 +360,47 @@ pre.vpl_terminal {
 .vpl_dimmed {
     opacity: 0.3;
 }
+
+.vpl_evaluate_result {
+    line-height: 125%;
+    height: auto;
+    width: inherit;
+    white-space: pre-wrap;
+    word-break: break-word;
+    word-wrap: break-word;
+    font-style: italic;
+    font-family: SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    box-sizing: border-box;
+    display: block;
+}
+
+.vpl_widget_header {
+    display: block;
+    font-size: 1.75em;
+    margin: 1em 0;
+    font-weight: bold;
+    border-top: 1px solid;
+    padding-top: 0.25em;
+}
+
+.sub_vpl_widget_header {
+    display: block;
+    font-size: 1.4em;
+    margin: 0.9em 0;
+    font-weight: bold;
+    border-top: 1px solid;
+    padding-top: 0.25em;
+}
+
+.sub_sub_vpl_widget_header {
+    display: block;
+    font-size: 1.1em;
+    margin: 0.8em 0;
+    font-weight: bold;
+    font-style: italic;
+}
+
+.vpl_enhanced_result{
+    font-size: 1.15em;
+    font-weight: bold
+}

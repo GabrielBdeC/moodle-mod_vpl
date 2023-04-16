@@ -173,7 +173,7 @@ class LUAInterface{
       }
       return "error";
     }
-    string enhanceMessage(string info){
+    string enhanceMessage(string info, bool program){
       if (checkLoadFunctionLua("enhanceMessage")){
         lua_pushstring(L, info.c_str());
         lua_pushstring(L, lang.c_str());
@@ -202,7 +202,7 @@ public:
 	static string readFile(string name);
 	static vector<string> splitLines(const string &data);
 	static int nextLine(const string &data);
-	static string caseFormat(string text, bool enhance/*=false*/);
+	static string caseFormat(string text, bool program, bool enhance/*=false*/);
 	static string toLower(const string &text);
 	static string normalizeTag(const string &text);
 	static bool parseLine(const string &text, string &name, string &data);
@@ -558,12 +558,17 @@ int Tools::nextLine(const string &data) {
 	return l;
 }
 
-string Tools::caseFormat(string text, bool enhance = false) {
+string Tools::caseFormat(string text, bool program, bool enhance = false) {
 	vector<string> lines = Tools::splitLines(text);
 	string res;
 	int nlines = lines.size();
-	for (int i = 0; i < nlines; i++)
-		res += (enhance ? L->enhanceMessage(lines[i]) : lines[i]) + '\n';
+	for (int i = 0; i < nlines; i++){
+		if (program){
+			res += "<testCase>" + lines[i] + '\n';
+		} else {
+			res += (enhance ? L->enhanceMessage(lines[i], program) : "<case>" + lines[i]) + '\n';
+		}
+	}
 	return res;
 }
 
@@ -1008,7 +1013,7 @@ RegularExpressionOutput::RegularExpressionOutput(const string &text, const strin
 					stringstream ss;
 					ss << wrongFlag;
 					ss >> flagCatch;
-					string errorType = string((L->langEvaluate(39)).c_str())+ string(errorCase)+ string ((L->langEvaluate(40)).c_str()) + string(flagCatch) + string ((L->langEvaluate(41)).c_str());
+					string errorType = string((L->langEvaluate(38)).c_str())+ string(errorCase)+ string ((L->langEvaluate(39)).c_str()) + string(flagCatch) + string ((L->langEvaluate(40)).c_str());
 					const char* flagError = errorType.c_str();
 					p_ErrorTest->addFatalError(flagError);
 					p_ErrorTest->outputEvaluation();
@@ -1423,12 +1428,12 @@ string TestCase::getComment() {
 		} else {
 			ret += (L->langEvaluate(15)).c_str();
 			ret += (L->langEvaluate(16)).c_str();
-			ret += Tools::caseFormat(input, enhance);
+			ret += Tools::caseFormat(input, true, enhance);
 			ret += (L->langEvaluate(17)).c_str();
-			ret += Tools::caseFormat(programOutputBefore + programOutputAfter, enhance);
+			ret += Tools::caseFormat(programOutputBefore + programOutputAfter, false, enhance);
 			if(output.size()>0){
 				ret += (L->langEvaluate(18)).c_str()+output[0]->type()+")\n";
-				ret += Tools::caseFormat(output[0]->studentOutputExpected(), enhance);
+				ret += Tools::caseFormat(output[0]->studentOutputExpected(), true, enhance);
 			}
 		}
 	}
@@ -1845,7 +1850,7 @@ void Evaluation::outputEvaluation() {
 	const char* stest[] = {(L->langEvaluate(29)).c_str(), (L->langEvaluate(30)).c_str()};
 	if (testCases.size() == 0) {
 		printf("<|--\n");
-		printf("%s", (L->langEvaluate(36)).c_str());
+		printf("%s", (L->langEvaluate(35)).c_str());
 		printf("--|>\n");
 	}
 	if (ncomments > 1) {
@@ -1881,7 +1886,7 @@ void Evaluation::outputEvaluation() {
 		int len = strlen(buf);
 		if (len > 3 && strcmp(buf + (len - 3), ".00") == 0)
 			buf[len - 3] = 0;
-		printf((L->langEvaluate(35)).c_str(), buf);
+		printf("\nGrade :=>>%s\n", buf);
 	}
 	fflush(stdout);
 }
@@ -1899,9 +1904,9 @@ void signalCatcher(int n) {
 	}
 	Evaluation *obj = Evaluation::getSinglenton();
 	if (n == SIGTERM) {
-		obj->addFatalError((L->langEvaluate(37)).c_str());
+		obj->addFatalError((L->langEvaluate(36)).c_str());
 	} else {
-		obj->addFatalError((L->langEvaluate(38)).c_str());
+		obj->addFatalError((L->langEvaluate(37)).c_str());
 		obj->outputEvaluation();
 		Stop::setTERMRequested();
 		abort();
@@ -1944,10 +1949,12 @@ int main(int argc, char *argv[], const char **env) {
     printf("Error loading translation lang file for the language: %s", lang.c_str());
     return EXIT_FAILURE;
   }
-  if (!(L->loadEnhacedLangLib())){
-    printf("Error loading enhanced lang file for the language: %s", lang.c_str());
-    return EXIT_FAILURE;
-  }
+	if (enhance){
+		if (!(L->loadEnhacedLangLib())){
+			printf("Error loading enhanced lang file for the language: %s", lang.c_str());
+			return EXIT_FAILURE;
+		}
+	}
   Timer::start();
   TestCase::setEnvironment(env);
   setSignalsCatcher();
