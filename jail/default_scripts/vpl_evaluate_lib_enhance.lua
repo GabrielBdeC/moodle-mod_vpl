@@ -72,7 +72,12 @@ function string:split(sep)
 end
 
 function loadEnhacedLangLib(idiom, lang)
-  enhance["default"] = jsonFileGet("lang_" .. lang .. "_map.json")
+  filename = "lang_" .. lang .. "_map.json"
+  if (lib_lua.file_exists(filename)) then
+    enhance["default"] = jsonFileGet(filename)
+  else
+    enhance["default"] = {}
+  end
   filename = "lang_" .. lang .. "_" .. idiom .. ".json"
   if (lib_lua.file_exists(filename)) then
     enhance[idiom] = jsonFileGet(filename)

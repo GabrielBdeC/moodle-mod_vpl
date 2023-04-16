@@ -370,6 +370,10 @@ class mod_vpl_submission_CE extends mod_vpl_submission {
                 }
             }
         }
+        if ($type != 2){
+            $data->files = remove_files_with_protected_names_evaluate($data->files);
+            $data->files = remove_files_with_protected_names_lang($data->files);
+        }
         $info .= vpl_bash_export( 'USER_LANG', $USER->lang );
         $info .= vpl_bash_export( 'VPL_ENHANCE', $vplinstance->enhance );
         // Add script file with VPL environment information.
