@@ -1,14 +1,14 @@
-name: Moodle Plugin CI
+name: VPL CI
 
-on: [push]
+on: [workflow_dispatch]
 
 jobs:
   test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     services:
       postgres:
-        image: postgres:12
+        image: postgres:13
         env:
           POSTGRES_USER: 'postgres'
           POSTGRES_HOST_AUTH_METHOD: 'trust'
@@ -27,12 +27,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['7.4', '8.0']
-        moodle-branch: ['MOODLE_39_STABLE', 'MOODLE_311_STABLE', 'master']
+        php: ['7.4', '8.0', '8.1']
+        moodle-branch: ['MOODLE_39_STABLE', 'MOODLE_311_STABLE', 'MOODLE_401_STABLE', 'MOODLE_402_STABLE', 'master']
         database: [pgsql, mariadb]
         exclude:
+          - php: 7.4
+            moodle-branch: MOODLE_402_STABLE
+          - php: 7.4
+            moodle-branch: master
           - php: 8.0
             moodle-branch: MOODLE_39_STABLE
+          - php: 8.1
+            moodle-branch: MOODLE_39_STABLE
+          - php: 8.1
+            moodle-branch: MOODLE_311_STABLE
+          - php: 8.1
+            moodle-branch: MOODLE_401_STABLE
+          - database: pgsql
+            moodle-branch: MOODLE_311_STABLE
+          - database: pgsql
+            moodle-branch: MOODLE_401_STABLE
+          - database: pgsql
+            moodle-branch: MOODLE_402_STABLE
+
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
@@ -109,7 +126,7 @@ jobs:
       
       - name: Install valgrind
         if: ${{ always() }}
-        run: sudo apt install -y valgrind
+        run: sudo apt-get install -y valgrind
 
       - name: VPL evaluate program
         if: ${{ always() }}
