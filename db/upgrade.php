@@ -476,11 +476,11 @@ function xmldb_vpl_upgrade_2022110512() {
 }
 
 /**
- * Upgrades VPL to 4.1.0 (2023030412) version
+ * Upgrades VPL to 4.2.0 (2023051312) version
  *
  * @return void
  */
-function xmldb_vpl_upgrade_2023030412() {
+function xmldb_vpl_upgrade_2023051312() {
     global $DB;
     $dbman = $DB->get_manager();
 
@@ -546,9 +546,9 @@ function xmldb_vpl_upgrade($oldversion = 0) {
         xmldb_vpl_upgrade_2022110512();
         upgrade_mod_savepoint(true, 2022110512, 'vpl');
     }
-    if ($oldversion < 2023030412) {
-        xmldb_vpl_upgrade_2023030412();
-        upgrade_mod_savepoint(true, 2023030412, 'vpl');
+    if ($oldversion < 2023051312) {
+        xmldb_vpl_upgrade_2023051312();
+        upgrade_mod_savepoint(true, 2023051312, 'vpl');
     }
     return true;
 }
