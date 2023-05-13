@@ -77,7 +77,10 @@ try {
             $files = $fgm->getallfiles();
             $matches = array();
             foreach ($files as $execution_file => $_){
-                if (preg_match(constant("VPL_EVALUATE_PATTERN"), $execution_file)){
+                if (
+                    preg_match(constant("VPL_EVALUATE_PATTERN"), $execution_file) ||
+                    preg_match(constant("VPL_EVALUATE_LIB_PATTERN"), $execution_file)
+                ){
                     array_push($matches, $execution_file);
                 }
             }

@@ -249,6 +249,9 @@ function vpl_add_instance($instance) {
         \core_completion\api::update_completion_date_event($cmid, 'vpl', $instance, $completionexpected);
     }
     $vpl = new mod_vpl( null, $instance->id );
+    $fgm = $vpl->get_required_fgm();
+    $files = $fgm->getallfiles();
+    set_lang_definition_execution_files($vpl, $files);
     add_lang_evaluate_vpl_execution_files($vpl);
     return $id;
 }

@@ -25,6 +25,7 @@
 
 require_once(dirname( __FILE__ ) . '/../vpl_submission_CE.class.php');
 
+define("LANG_PATTERN", "/^lang_.*\.json$/");
 define("MAP_LANG_PATTERN", "/^lang_.*_map\.json$/");
 define("VPL_EVALUATE_PATTERN", "/^vpl_evaluate_.*\.json$/");
 define("VPL_EVALUATE_LIB_PATTERN", "/^vpl_evaluate_lib_.*\.lua$/");

@@ -45,7 +45,7 @@ class mod_vpl_executionkeepfiles_form extends moodleform {
         $num = 0;
         foreach ($list as $filename) {
             if (
-                !preg_match(constant("MAP_LANG_PATTERN"), $filename) &&
+                !preg_match(constant("LANG_PATTERN"), $filename) &&
                 !preg_match(constant("VPL_EVALUATE_PATTERN"), $filename) &&
                 !preg_match(constant("VPL_EVALUATE_LIB_PATTERN"), $filename)
             ){
@@ -85,7 +85,8 @@ if ($fromform = $mform->get_data()) {
         $matches = array();
         foreach ($list as $execution_file){
             if (
-                preg_match(constant("MAP_LANG_PATTERN"), $execution_file) ||
+                preg_match(constant("LANG_PATTERN"), $execution_file) ||
+                preg_match(constant("VPL_EVALUATE_PATTERN"), $filename) ||
                 preg_match(constant("VPL_EVALUATE_LIB_PATTERN"), $filename)
             ){
                 array_push($matches, $execution_file);
