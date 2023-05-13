@@ -786,6 +786,32 @@ define(
                     return false;
                 }
             };
+            this.addInteligentAssistentTab = function(content){
+                var titleclass = 'vpl_ide_accordion_t_chat_gpt';
+                var contentclass = 'vpl_ide_accordion_c_chat_gpt';
+                if (result.find('.' + contentclass).length == 0) {
+                    result.append('<div class="' + titleclass + '"></div>');
+                    result.append('<div class="' + contentclass + '"></div>');
+                }
+                var titleTag = result.find('.' + titleclass);
+                var contentTag = result.find('.' + contentclass);
+                var HTMLcontent = $('<div>' + content + '</div>');
+                HTMLcontent.find('h4').replaceWith(function() {
+                    return $("<h5>").append($(this).contents());
+                });
+                if (contentTag.html() == HTMLcontent.html()) {
+                    return content > '';
+                }
+                if (content > '') {
+                    titleTag.replaceWith('<h4 class="' + titleclass + '">chat_gpt</h4>');
+                    contentTag.replaceWith('<div class="ui-widget ' + contentclass + '">' + HTMLcontent.html() + '</div>');
+                    return true;
+                } else {
+                    titleTag.replaceWith('<div class="' + titleclass + '"></div>');
+                    contentTag.replaceWith('<div class="' + contentclass + '"></div>');
+                    return false;
+                }
+            }
             this.setResult = function(res, go) {
                 self.updateEvaluationNumber(res);
                 var files = fileManager.getFiles();
@@ -809,6 +835,8 @@ define(
                 show = show || hasContent;
                 formated = VPLUtil.processResult(res.evaluation, fileNames, files, false, false);
                 hasContent = self.setResultTab('comments', formated, res.evaluation);
+                show = show || hasContent;
+                hasContent = self.addInteligentAssistentTab();
                 show = show || hasContent;
                 formated = VPLUtil.sanitizeText(res.execution);
                 hasContent = self.setResultTab('execution', formated, res.execution);

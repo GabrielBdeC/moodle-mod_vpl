@@ -3,15 +3,8 @@
   "version": "1.0.0",
   "babel": {
     "sourceMaps": true,
-    "comments": false,
-    "presets": [
-      [
-        "minify",
-        {
-          "builtIns": false
-        }
-      ]
-    ]
+    "comments": false
+    
   },
   "scripts": {
     "build": "babel src --out-dir build --out-file-extension .min.js"
